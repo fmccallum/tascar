@@ -44,16 +44,51 @@ namespace HOA {
       uint32_t acn(0);
       for(int l = 0; l <= M; ++l) {
         for(int m = -l; m <= l; ++m) {
-          float P((float)leg[gsl_sf_legendre_array_index(l, abs(m))]);
+          double P(leg[gsl_sf_legendre_array_index(l, abs(m))]);
           if(m < 0)
-            B[acn] = P * sinf((float)abs(m) * azimuth);
+            B[acn] = P * sin(abs(m) * azimuth);
           else if(m == 0)
             B[acn] = P;
           else
-            B[acn] = P * cosf((float)abs(m) * azimuth);
+            B[acn] = P * cos(abs(m) * azimuth);
           ++acn;
         }
       }
+    };
+
+  private:
+    int32_t M;
+    uint32_t n_elements;
+    double* leg;
+  };
+
+  class encoder2D_t {
+  public:
+    encoder2D_t();
+    ~encoder2D_t();
+    void set_order(uint32_t order);
+    inline void operator()(float azimuth, float elevation,
+                           std::vector<float>& B)
+    {
+      if(B.size() < n_elements)
+        throw TASCAR::ErrMsg("Insufficient space for ambisonic weights.");
+      gsl_sf_legendre_array(GSL_SF_LEGENDRE_SCHMIDT, M, sin(elevation), leg);
+      uint32_t acn(0);
+
+
+      for(int l = 0; l <= M; ++l) {
+        double P(leg[gsl_sf_legendre_array_index(l, l)]);
+        if(l==0){
+          B[acn] = P;
+        }
+        else{
+          B[acn] = P * sin(l* azimuth);
+          ++acn;
+          B[acn] = P * cos(l *azimuth);
+        }
+        ++acn;
+      }
+
     };
 
   private:
