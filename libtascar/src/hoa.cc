@@ -48,6 +48,26 @@ void encoder_t::set_order(uint32_t order)
   n_elements = (order + 1) * (order + 1);
 }
 
+encoder2D_t::encoder2D_t() : M(0), n_elements(0), leg(NULL)
+{
+  set_order(1);
+}
+
+encoder2D_t::~encoder2D_t()
+{
+  if(leg)
+    delete[] leg;
+}
+
+void encoder2D_t::set_order(uint32_t order)
+{
+  M = order;
+  if(leg)
+    delete[] leg;
+  leg = new double[gsl_sf_legendre_array_n(order)];
+  n_elements = 2*order + 1;
+}
+
 decoder_t::decoder_t()
     : dec(NULL), amb_channels(0), out_channels(0), M(0), dectype(basic),
       method(pinv)
