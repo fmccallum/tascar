@@ -6,38 +6,31 @@ include ../rules.mk
 #
 # main targets:
 #
-RECEIVERS = omni nsp amb3h0v amb3h3v amb1h0v amb1h1v cardioid hann	\
+RECEIVERS = omni nsp nspn amb3h0v amb3h3v amb1h0v amb1h1v cardioid hann	\
   vbap vbap3d hoa2d ortf intensityvector vmic chmap hoa2d_fuma		\
   cardioidmod debugpos hoa2d_fuma_hos fakebf wfs hoa3d hoa3d_enc	\
-  simplefdn itu51 foaconv hrtf micarray stereo
+  simplefdn itu51 foaconv hrtf micarray \
+  vbapn hoa2d_enc hoa2d_hybridv \
+  hoa2d_hybrid nsplut vbaplut lut \
 
-SOURCES = omni cardioidmod door generic1storder farsrc head
+SOURCES = omni cardioidmod door generic1storder farsrc
 
 TASCARMODS = system pos2osc sampler pendulum epicycles motionpath	\
-  foa2hoadiff route oscevents oscjacktime ltcgen nearsensor dirgain	\
-  dummy matrix hoafdnrot mpu6050track touchosc savegains hrirconv	\
-  hossustain rotator orientationmodulator locationmodulator		\
-  locationvelocity granularsynth fail waitforjackport sleep jackrec	\
-  oscserver
+  foa2hoadiff route oscevents oscjacktime ltcgen lightctl nearsensor	\
+  dirgain dummy matrix hoafdnrot mpu6050track touchosc savegains	\
+  hrirconv joystick hossustain midicc2osc midictl rotator oscserver	\
+  qualisystracker orientationmodulator locationmodulator		\
+  locationvelocity granularsynth fail oscrelay waitforjackport sleep	\
+  ovheadtracker jackrec
 
 TASCARMODSGUI = tracegui simplecontroller timedisplay geopresets	\
   transportgui lightcolorpicker
 
-AUDIOPLUGINS = delay dummy gate hannenv identity lipsync		\
+AUDIOPLUGINS = delay dummy gate hannenv identity lipsync							\
   lipsync_paper lookatme metronome onsetdetector sine sndfile spksim	\
-  gainramp pulse pink dumplevels feedbackdelay bandpass filter		\
-  level2osc const noise loopmachine pos2osc gain sndfileasync		\
-  addchannel tubesim spkcalib
-
-MASKPLUGINS = fig8 multibeam
-
-ifneq ($(OS),Windows_NT)
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-  TASCARMODS += lightctl midicc2osc midictl joystick qualisystracker	\
-  oscrelay ovheadtracker
-endif
-endif
+  gainramp pulse pink dumplevels feedbackdelay bandpass filter				\
+  level2osc const noise loopmachine pos2osc gain sndfileasync					\
+  addchannel
 
 ifeq "$(HAS_OPENCV2)" "yes"
 GLABSENSORS += trackir
@@ -51,15 +44,15 @@ endif
 
 
 ifeq "$(HAS_LSL)" "yes"
-TASCARMODS += lsljacktime lslactor levels2osc pos2lsl
+TASCARMODS +=  lsljacktime lslactor levels2osc pos2lsl
 AUDIOPLUGINS += speechactivity periodogram
-TASCARMODSGUI += datalogging glabsensors waitforlslstream
+TASCARMODSGUI += datalogging glabsensors
 GLABSENSORS += smiley eog emergency espheadtracker midicc	\
   qualisys jackstatus serial oscthreshold
 endif
 
 ifeq "$(HAS_OPENMHA)" "yes"
-#AUDIOPLUGINS +=  openmha
+AUDIOPLUGINS +=  openmha
 endif
 
 #
@@ -71,8 +64,6 @@ TASCARMODDLLS = $(patsubst %,build/$(PLUGINPREFIX)tascar_%$(DLLEXT),$(TASCARMODS
 TASCARMODDLLSGUI = $(patsubst %,build/$(PLUGINPREFIX)tascar_%$(DLLEXT),$(TASCARMODSGUI))
 
 AUDIOPLUGINDLLS = $(patsubst %,build/$(PLUGINPREFIX)tascar_ap_%$(DLLEXT),$(AUDIOPLUGINS))
-
-MASKPLUGINDLLS = $(patsubst %,build/$(PLUGINPREFIX)tascar_mask_%$(DLLEXT),$(MASKPLUGINS))
 
 GLABSENSORDLLS = $(patsubst %,build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT),$(GLABSENSORS))
 
@@ -110,7 +101,7 @@ CXXFLAGS += `pkg-config --cflags $(EXTERNALS)`
 
 LDLIBS += -ldl $(TASCARLIB)
 
-modules: $(RECEIVERMODS) $(SOURCEMODS) $(TASCARMODDLLS) $(TASCARMODDLLSGUI) $(AUDIOPLUGINDLLS) $(MASKPLUGINDLLS) $(GLABSENSORDLLS)
+modules: $(RECEIVERMODS) $(SOURCEMODS) $(TASCARMODDLLS) $(TASCARMODDLLSGUI) $(AUDIOPLUGINDLLS) $(GLABSENSORDLLS)
 
 clean:
 	rm -Rf *~ src/*~ build doc/html
@@ -120,25 +111,25 @@ clean:
 $(TASCARMODDLLSGUI): EXTERNALS += gtkmm-3.0
 $(TASCARMODDLLSGUI): CXXFLAGS+=-I./build
 
-build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT): EXTERNALS += gtkmm-3.0
-build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT): LDLIBS += -llsl
+build/$(PLUGINPREFIX)tascarreceiver_hoa2d$(DLLEXT): LDLIBS+=-lfftw3f
 build/$(PLUGINPREFIX)tascar_ap_lipsync$(DLLEXT): LDLIBS+=-lfftw3f
 build/$(PLUGINPREFIX)tascar_ap_lipsync_paper$(DLLEXT): LDLIBS+=-lfftw3f
-build/$(PLUGINPREFIX)tascar_ap_openmha$(DLLEXT): LDLIBS+=-lopenmha
-build/$(PLUGINPREFIX)tascar_ap_periodogram$(DLLEXT): LDLIBS+=-llsl
 build/$(PLUGINPREFIX)tascar_ap_speechactivity$(DLLEXT): LDLIBS+=-llsl
+build/$(PLUGINPREFIX)tascar_ap_periodogram$(DLLEXT): LDLIBS+=-llsl
+build/$(PLUGINPREFIX)tascar_ap_openmha$(DLLEXT): LDLIBS+=-lopenmha
+build/$(PLUGINPREFIX)tascar_ltcgen$(DLLEXT): EXTERNALS+=ltc
+build/$(PLUGINPREFIX)tascarreceiver_hoa3d_enc$(DLLEXT): EXTERNALS+=gsl
+build/$(PLUGINPREFIX)tascarreceiver_hoa3d$(DLLEXT): EXTERNALS+=gsl eigen3
+build/$(PLUGINPREFIX)tascar_hossustain$(DLLEXT): EXTERNALS += fftw3f
+build/$(PLUGINPREFIX)tascar_lsljacktime$(DLLEXT) build/$(PLUGINPREFIX)tascar_pos2lsl$(DLLEXT) build/$(PLUGINPREFIX)tascar_levels2osc$(DLLEXT) build/$(PLUGINPREFIX)tascar_lslactor$(DLLEXT): LDLIBS+=-llsl
+build/$(PLUGINPREFIX)tascar_lightctl$(DLLEXT) build/$(PLUGINPREFIX)tascar_ovheadtracker$(DLLEXT): LDLIBS+=$(TASCARDMXLIB)
+build/$(PLUGINPREFIX)tascar_simplecontroller$(DLLEXT): build/simplecontroller_glade.h
 build/$(PLUGINPREFIX)tascar_datalogging$(DLLEXT): LDLIBS += -lmatio -llsl
 build/$(PLUGINPREFIX)tascar_datalogging$(DLLEXT): build/datalogging_glade.h
-build/$(PLUGINPREFIX)tascar_hossustain$(DLLEXT): EXTERNALS += fftw3f
-build/$(PLUGINPREFIX)tascar_lightctl$(DLLEXT) build/$(PLUGINPREFIX)tascar_ovheadtracker$(DLLEXT): LDLIBS+=$(TASCARDMXLIB)
-build/$(PLUGINPREFIX)tascar_lsljacktime$(DLLEXT) build/$(PLUGINPREFIX)tascar_pos2lsl$(DLLEXT) build/$(PLUGINPREFIX)tascar_levels2osc$(DLLEXT) build/$(PLUGINPREFIX)tascar_lslactor$(DLLEXT): LDLIBS+=-llsl
-build/$(PLUGINPREFIX)tascar_ltcgen$(DLLEXT): EXTERNALS+=ltc
-build/$(PLUGINPREFIX)tascar_simplecontroller$(DLLEXT): build/simplecontroller_glade.h
 build/$(PLUGINPREFIX)tascar_timedisplay$(DLLEXT): build/timedisplay_glade.h
-build/$(PLUGINPREFIX)tascar_waitforlslstream$(DLLEXT): LDLIBS+=-llsl
-build/$(PLUGINPREFIX)tascarreceiver_hoa2d$(DLLEXT): LDLIBS+=-lfftw3f
-build/$(PLUGINPREFIX)tascarreceiver_hoa3d$(DLLEXT): EXTERNALS+=gsl eigen3
-build/$(PLUGINPREFIX)tascarreceiver_hoa3d_enc$(DLLEXT): EXTERNALS+=gsl
+
+build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT): EXTERNALS += gtkmm-3.0
+build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT): LDLIBS += -llsl
 
 ifeq "$(HAS_OPENCV2)" "yes"
 build/$(PLUGINPREFIX)glabsensor_trackir$(DLLEXT): EXTERNALS += opencv
@@ -153,22 +144,19 @@ build/glabsensors.o: EXTERNALS += gtkmm-3.0
 build/glabsensors.o: build/glabsensors_glade.h
 build/$(PLUGINPREFIX)tascar_glabsensors$(DLLEXT): build/glabsensors_glade.h
 build/$(PLUGINPREFIX)tascar_glabsensors$(DLLEXT): build/glabsensorplugin.o build/glabsensors_glade.h src/glabsensorplugin.h
-build/$(PLUGINPREFIX)tascar_glabsensors$(DLLEXT): LDLIBS += -llsl build/glabsensorplugin.o
+build/$(PLUGINPREFIX)tascar_glabsensors$(DLLEXT): LDLIBS += -llsl
 
 build/$(PLUGINPREFIX)tascarreceiver_%$(DLLEXT): src/receivermod_%.cc
-	$(CXX) -shared -o $@ $< $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -shared -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 build/$(PLUGINPREFIX)tascarsource_%$(DLLEXT): src/tascarsource_%.cc
-	$(CXX) -shared -o $@ $< $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -shared -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 build/$(PLUGINPREFIX)tascar_%$(DLLEXT): src/tascarmod_%.cc
-	$(CXX) -shared -o $@ $< $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -shared -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 build/$(PLUGINPREFIX)tascar_ap_%$(DLLEXT): src/tascar_ap_%.cc
-	$(CXX) -shared -o $@ $< $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
-
-build/$(PLUGINPREFIX)tascar_mask_%$(DLLEXT): src/tascar_mask_%.cc
-	$(CXX) -shared -o $@ $< $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -shared -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 build/$(PLUGINPREFIX)glabsensor_%$(DLLEXT): src/glabsensor_%.cc build/glabsensorplugin.o src/glabsensorplugin.h
 	$(CXX) -shared -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
