@@ -26,15 +26,17 @@ lut::lut()
 
 }
 
+
+
 void lut::setupTables()
 {
   if(!use3D) {
-    incentries = 1;
+    elentries = 1;
     firstTable = new float**[1];
     firstTable[0] = new float* [azentries] {};
   } else {
-    firstTable = new float**[incentries];
-    for(int i =0; i< incentries;i++){
+    firstTable = new float**[elentries];
+    for(int i =0; i< elentries;i++){
       firstTable[i] = new float* [azentries] {};
     }
   }
@@ -45,18 +47,18 @@ void lut::setupTables()
 
 }
 
-float lut::distance(float az1, float inc1, float az2, float inc2)
+float lut::distance(float az1, float el1, float az2, float el2)
 {
-  return 1 - (sin(inc1) * sin(inc2) * cos(az1 - az2) + cos(inc1) * cos(inc2));
+  return 1 - (sin(el1) * sin(el2) * cos(az1 - az2) + cos(el1) * cos(el2));
 }
 
-float* lut::findNearestEntry(float az, float inc, float** directions)
+float* lut::findNearestEntry(float az, float el, float** directions)
 {
 
   int bestIndex = 0;
-  float bestDist = distance(az, inc, directions[0][0], directions[0][1]);
+  float bestDist = distance(az, el, directions[0][0], directions[0][1]);
   for(int i = 1; i < nDirections; i++) {
-    float dist = distance(az, inc, directions[i][0], directions[i][1]);
+    float dist = distance(az, el, directions[i][0], directions[i][1]);
     if(dist < bestDist) {
       bestDist = dist;
       bestIndex = i;
@@ -66,8 +68,29 @@ float* lut::findNearestEntry(float az, float inc, float** directions)
   return secondTable[bestIndex];
 }
 
-void lut::loadgains(std::string gainFile)
+
+
+void lut::loadgains(std::string gainFile,float az_s,float el_s,int u3D)
 {
+  use3D = u3D;
+  az_spacing = az_s;
+  az_spacing_rad = DEG2RADf* az_spacing;
+  azentries = (int)360 / az_spacing;
+
+  if (use3D == 0){
+    el_spacing = 360;
+    elentries =1;
+  }
+  else{
+    el_spacing = el_s;
+    elentries =(int)180/el_spacing;
+  }
+  el_spacing_rad = DEG2RADf*el_spacing;
+
+
+  
+
+
   std::ifstream source;
   source.open(gainFile, std::ios_base::in);
   if(!source) {
@@ -76,26 +99,19 @@ void lut::loadgains(std::string gainFile)
   std::string line;
 
   // Assumes that metadata is in first 4 lines of file
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 2; i++) {
     std::getline(source, line);
     std::istringstream in(line);
     std::string name;
     in >> name;
-    if(name == "use3d") {
-      in >> use3D;
-    } else if(name == "spacing") {
-      in >> spacing;
-      azentries = (int)360 / spacing;
-      incentries =(int)180/spacing;
-      spacing_rad = DEG2RADf* spacing;
-    } else if(name == "nKernels") {
+    if(name == "nKernels") {
       in >> nKernels;
     } else if(name == "nDirections") {
       in >> nDirections;
     }
   }
   //check that all settings are valid
-  if(use3D == -1 || spacing <= 0 || nKernels <= 0 || nDirections <= 0) {
+  if(use3D == -1 || az_spacing <= 0 || nKernels <= 0 || nDirections <= 0) {
     throw TASCAR::ErrMsg("Please fix header in gains file");
   }
 
@@ -137,13 +153,13 @@ void lut::loadgains(std::string gainFile)
 
   // now fill in first table with nearest input direction
   for(int azn = 0; azn < azentries; azn++) {
-    float az = azn *spacing * DEG2RADf - TASCAR_PIf;
-    for(int incn = 0; incn < incentries; incn++) {
-      // TASCAR puts horizontal plane at inc = 0, but gain file uses inc =
+    float az = azn *az_spacing * DEG2RADf - TASCAR_PIf;
+    for(int eln = 0; eln < elentries; eln++) {
+      // TASCAR puts horizontal plane at el = 0, but gain file uses el =
       // 90deg, making zero index equal to horizontal plane
-      float inc = DEG2RADf * ((1-use3D)*90 + incn * spacing); 
+      float el = DEG2RADf * ((1-use3D)*90 + eln * el_spacing); 
 
-      firstTable[incn][azn] = findNearestEntry(az, inc, directions);
+      firstTable[eln][azn] = findNearestEntry(az, el, directions);
     }
   }
 
@@ -155,10 +171,10 @@ int lut::getChannels()
   return nKernels;
 }
 
-float* lut::get_entry(float az, float inc)
+float* lut::get_entry(float az, float el)
 {
 
-  //az should be in range -pi to pi, and inc shouold be -pi/2 to pi/2
+  //az should be in range -pi to pi, and el shouold be -pi/2 to pi/2
   /*if(az<-TASCAR_PIf){
     if(az<-TASCAR_2PIf){
       throw TASCAR::ErrMsg("Source at angle less than expected range");
@@ -169,27 +185,27 @@ float* lut::get_entry(float az, float inc)
     throw TASCAR::ErrMsg("at angle greater than expected range");
 
 
-  if( inc <-TASCAR_PI2f){
+  if( el <-TASCAR_PI2f){
     if(az<-TASCAR_PIf){
-      throw TASCAR::ErrMsg("Inc at angle less than expected");
+      throw TASCAR::ErrMsg("el at angle less than expected");
     }
     //temporarily
-    inc = -TASCAR_PI2f;
+    el = -TASCAR_PI2f;
   }
-  else if( inc > TASCAR_PI2f){
-    throw TASCAR::ErrMsg("Inc at angle greater than expected");
+  else if( el > TASCAR_PI2f){
+    throw TASCAR::ErrMsg("el at angle greater than expected");
   }*/
 
 
 
-  int az_index = (int)(0.5 + (az + TASCAR_PIf) / spacing_rad);
-  int inc_index =use3D*((int)(0.5 + (inc + TASCAR_PI2f) / spacing_rad));
+  int az_index = (int)(0.5 + (az + TASCAR_PIf) / az_spacing_rad);
+  int el_index =(int)(0.5 + (el + TASCAR_PI2f) / el_spacing_rad);
 
   if(az_index == azentries) {
     az_index = 0;
   }
 
-  return firstTable[inc_index][az_index];
+  return firstTable[el_index][az_index];
 }
 
 lut::~lut()
