@@ -20,6 +20,9 @@ public:
   lut LUT;
   float* B;
   float* deltaB;
+  float az_spacing;
+  float el_spacing;
+  int use3D=1;
 };
 
 lut_t::data_t::data_t(uint32_t channels )
@@ -32,7 +35,10 @@ lut_t::lut_t(tsccfg::node_t xmlsrc)
 {
   std::string gainFile;
   GET_ATTRIBUTE(gainFile,"","gainFile");
-  LUT.loadgains(gainFile);
+  GET_ATTRIBUTE(az_spacing,"","az_spacing");
+  GET_ATTRIBUTE(el_spacing,"","el_spacing");
+  GET_ATTRIBUTE(use3D,"","use3D");
+  LUT.loadgains(gainFile,az_spacing,el_spacing,use3D);
   channels = LUT.getChannels();
   deltaB = new float[channels]();
 }
