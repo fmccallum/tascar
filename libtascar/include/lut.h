@@ -18,17 +18,19 @@ class lut {
   public:
     lut();
     ~lut();
-    void loadgains(std::string gainFile);
-    float* get_entry(float az,float inc);
+    void loadgains(std::string gainFile,float az_s,float el_s,int u3D);
+    float* get_entry(float az,float el);
     int getChannels();
 
   
   private:
     int use3D =-1;
-    float spacing = -1;
-    float spacing_rad = -1;
+    float az_spacing = -1;
+    float el_spacing = -1;
+    float az_spacing_rad = -1;
+    float el_spacing_rad = -1;
     int azentries=0;
-    int incentries=0;
+    int elentries=0;
     int nKernels = -1;
     int nDirections = -1;
 
@@ -36,8 +38,8 @@ class lut {
     float** secondTable; //2D array of gains
     
     void setupTables();
-    float* findNearestEntry(float az,float inc,float** directions);
-    float distance(float az1,float inc1,float az2,float inc2);
+    float* findNearestEntry(float az,float el,float** directions);
+    float distance(float az1,float el1,float az2,float el2);
 
 };
 
