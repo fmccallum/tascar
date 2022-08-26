@@ -1,3 +1,28 @@
+# New receiver type plugins
+
+## lut
+Takes arguments: 
+
+"gainFile": Path to file containing gains to use in look up table. Gain file consists of nKernels, nDirections then the az and inc and gains for each channel.
+
+"az_spcaing" and "el_spacing": the spacing between entries in the regular dense look up table in degrees. This look up table has entries that point to the nearest entry from the gain file.
+
+"use3D": if = 1 az and el spacing used to make LUT, if = 0 the dense LUT only uses horizontal plane. 
+
+Uses lut.h and lut.cc files found in libtascar folder
+
+## nspn and vbapn
+Versions of plugins whiuch only applies gains for active speakers. vbapn also uses 1-norm.
+
+## nsplut and vbaplut
+Versions of nspn and vbapn which use 720 entry LUTs on the horizontal plane  to find the active speakers so that computations don't scale  as much with the number of speakers.
+
+## hoa2d_enc
+HOA encoder for 2D only so outputs less channels, uses modified hoa.h file
+
+## hoa2d_hybrid and hoa2dhybridv
+Takes in attribute "Diviser" which is equal to the number of VSPKS positioned regularly on horizontal plane. The sources are first encoded onto virtual speaker channels using nearest speaker of vbap, and then vspk channels are encoded into hoa.
+
 # Toolbox for Acoustic Scene Creation and Rendering (TASCAR)
 
 TASCAR is a collection of tools for creating spatially dynamic
