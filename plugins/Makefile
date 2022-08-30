@@ -11,7 +11,9 @@ RECEIVERS = omni nsp nspn amb3h0v amb3h3v amb1h0v amb1h1v cardioid hann	\
   cardioidmod debugpos hoa2d_fuma_hos fakebf wfs hoa3d hoa3d_enc	\
   simplefdn itu51 foaconv hrtf micarray stereo \
   vbapn hoa2d_enc hoa2d_hybridv \
-  hoa2d_hybrid nsplut vbaplut lut
+  hoa2d_hybrid nsplut vbaplut lut \
+  lutnull nsplutnull nspnnull vbaplutnull vbapnnull \
+  hoa2d_hybridnull hoa2dhybridvnull hoa3d_encnull hoa2d_encnull
   
 SOURCES = omni cardioidmod door generic1storder farsrc head
 
