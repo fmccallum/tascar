@@ -23,6 +23,13 @@ HOA encoder for 2D only so outputs less channels, uses modified hoa.h file
 ## hoa2d_hybrid and hoa2dhybridv
 Takes in attribute "Diviser" which is equal to the number of VSPKS positioned regularly on horizontal plane. The sources are first encoded onto virtual speaker channels using nearest speaker of vbap, and then vspk channels are encoded into hoa.
 
+## null plugins
+  Plugins were created with no real-time processing (an empty addpointsource function)
+
+  hoa2d_hybrid nsplut vbaplut lut
+  lutnull nsplutnull nspnnull vbaplutnull vbapnnull
+  hoa2d_hybridnull hoa2dhybridvnull hoa3d_encnull hoa2d_encnull
+
 # Toolbox for Acoustic Scene Creation and Rendering (TASCAR)
 
 TASCAR is a collection of tools for creating spatially dynamic
